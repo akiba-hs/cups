@@ -1,5 +1,5 @@
 services:
-  cups-lbp810:
+  cups:
     image: ghcr.io/akiba-hs/cups
     build: .
     restart: always
