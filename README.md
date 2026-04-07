@@ -24,14 +24,12 @@ Install avahi:
 apt install avahi-daemon
 ```
 
-To enable printer discovery on the network, add a service file matching your queue.
-
-Canon LBP-810 example in `/etc/avahi/services/cups-lbp810.service`:
+To enable printer discovery for both queues at once, add `/etc/avahi/services/cups-printers.service`:
 ```xml
 <?xml version="1.0" standalone='no'?>
 <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
 <service-group>
-  <name replace-wildcards="yes">Canon LBP-810 on %h</name>
+  <name replace-wildcards="yes">CUPS Printers on %h</name>
 
   <service>
     <type>_ipp._tcp</type>
@@ -50,15 +48,6 @@ Canon LBP-810 example in `/etc/avahi/services/cups-lbp810.service`:
     <txt-record>Color=F</txt-record>
     <txt-record>Duplex=F</txt-record>
   </service>
-</service-group>
-```
-
-TSPL/XPrinter example in `/etc/avahi/services/cups-printer.service`:
-```xml
-<?xml version="1.0" standalone='no'?>
-<!DOCTYPE service-group SYSTEM "avahi-service.dtd">
-<service-group>
-  <name replace-wildcards="yes">CUPS Printer on %h</name>
 
   <service>
     <type>_ipp._tcp</type>
