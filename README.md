@@ -8,7 +8,7 @@ Provides a Docker image for CUPS with:
 ## Installation
 1. Copy compose.yml to server with attached printer
 2. `docker compose up -d --build`
-3. Discover printer URI: `docker compose exec cups lpinfo -v`
+3. Discover stable USB URI: `docker compose exec cups lpinfo -v`
 4. Add Canon LBP-810 if needed:
    `docker compose exec cups lpadmin -p Canon-LBP-810 -E -v 'usb://...' -P /usr/share/cups/model/Canon-LBP-810-capt.ppd`
 5. Add a TSPL/XPrinter queue with the adapted TDP-245 Plus PPD:
@@ -17,6 +17,8 @@ Provides a Docker image for CUPS with:
 7. Add the network printer to your client OS by IPP/LPD using host `<host>:631`
 
 The TSPL integration is intended for printers that are compatible with the `TDP-245 Plus.ppd` profile and the Linux `raster-tspl` filter. That includes setups where users report success with the PPD from `http://www.xprinter.com.ua/download/Xprinter_printer_label_MAC_driver.zip`.
+
+With the current compose setup, CUPS sees the real USB bus and can return stable `usb://...` URIs that usually include device identity data such as vendor, model, and serial. Prefer that URI over `/dev/usb/lp*`, because it survives cable replugging and port changes much better.
 
 ## Avahi Setup
 Install avahi:
