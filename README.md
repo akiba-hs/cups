@@ -13,7 +13,7 @@ Provides a Docker image for CUPS with:
    `docker compose exec cups lpadmin -p Canon-LBP-810 -E -v 'usb://...' -P /usr/share/cups/model/Canon-LBP-810-capt.ppd`
 5. Add a TSPL/XPrinter queue with the adapted TDP-245 Plus PPD:
    `docker compose exec cups lpadmin -p XPrinter-TDP245 -E -v 'usb://...' -P /usr/share/cups/model/tspl/TDP-245-Plus-tspl.ppd`
-6. Go to `http://<host>:631` -> Printers -> choose your queue -> tune default label size / darkness / media type
+6. Go to `http://<host>:631` -> Printers -> Canon-LBP-810 -> setup default parameters -> Miscellaneous -> Reset printer before printing -> AlwaysReset
 7. Add the network printer to your client OS by IPP/LPD using host `<host>:631`
 
 The TSPL integration is intended for printers that are compatible with the `TDP-245 Plus.ppd` profile and the Linux `raster-tspl` filter. That includes setups where users report success with the PPD from `http://www.xprinter.com.ua/download/Xprinter_printer_label_MAC_driver.zip`.
