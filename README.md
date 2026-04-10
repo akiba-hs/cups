@@ -2,7 +2,8 @@
 Provides a Docker image for CUPS with:
 
 - Canon LBP-810 CAPT driver (`capt_lbp810-1120`)
-- `x365b.ppd` and `xprinter-tspl`, adapted from https://github.com/prodocik/xprinter-xp-v3-linux/
+- official Linux TSPL filters from iDPRT (`raster-tspl`, `raster-esc`)
+- `TDP-245-Plus-tspl.ppd`, generated from the filter-compatible iDPRT `sp410.tspl.ppd` profile with XPrinter-friendly branding and explicit `30 x 20 mm` / `20 x 30 mm` media presets
 
 ## Installation
 1. Copy compose.yml to server with attached printer
@@ -10,10 +11,12 @@ Provides a Docker image for CUPS with:
 3. Discover stable USB URI: `docker compose exec cups lpinfo -v`
 4. Add Canon LBP-810:
    `docker compose exec cups lpadmin -p Canon-LBP-810 -E -v 'usb://...' -P /usr/share/cups/model/Canon-LBP-810-capt.ppd`
-5. Add XPrinter:
-   `docker compose exec cups lpadmin -p XPrinter -E -v 'usb://...' -P /usr/share/cups/model/xp365b.ppd`
-6. Go to `http://<host>:631` -> Printers -> Canon-LBP-810 -> setup default parameters -> Miscellaneous -> Reset printer before printing -> AlwaysReset
-7. Add the network printer to your client OS by IPP/LPD using host `<host>:631`
+5. Add a TSPL/XPrinter queue with the adapted TDP-245 Plus PPD:
+   `docker compose exec cups lpadmin -p XPrinter -E -v 'usb://...' -P /usr/share/cups/model/tspl/TDP-245-Plus-tspl.ppd`
+6. Set queue defaults for `30 x 20 mm` labels with `2 mm` gaps:
+   `docker compose exec cups lpadmin -p XPrinter -o PageSize=20x30mmRotated.Fullbleed -o PageRegion=20x30mmRotated.Fullbleed -o PaperType=1 -o Resolution=203dpi`
+7. Go to `http://<host>:631` -> Printers -> Canon-LBP-810 -> setup default parameters -> Miscellaneous -> Reset printer before printing -> AlwaysReset
+8. Add the network printer to your client OS by IPP/LPD using host `<host>:631`
 
 ## Avahi Setup
 Install avahi:
@@ -55,7 +58,7 @@ To enable printer discovery on the network, add files:
 <?xml version="1.0" standalone='no'?>
 <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
 <service-group>
-  <name replace-wildcards="yes">XPrinter TDP245 on %h</name>
+  <name replace-wildcards="yes">XPrinter on %h</name>
   <service>
     <type>_ipp._tcp</type>
     <subtype>_universal._sub._ipp._tcp</subtype>
@@ -63,7 +66,7 @@ To enable printer discovery on the network, add files:
     <txt-record>txtvers=1</txt-record>
     <txt-record>qtotal=1</txt-record>
     <txt-record>rp=printers/XPrinter</txt-record>
-    <txt-record>ty=XPrinter</txt-record>
+    <txt-record>ty=XPrinter TDP-245 compatible</txt-record>
     <txt-record>product=(TSPL printer via CUPS)</txt-record>
     <txt-record>adminurl=http://%h:631/printers/XPrinter</txt-record>
     <txt-record>URF=none</txt-record>
