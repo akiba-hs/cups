@@ -4,87 +4,71 @@ import sys
 from pathlib import Path
 
 
-REPLACEMENTS = {
-    '*PCFileName: "sp410.tspl.ppd"': '*PCFileName: "TDP245TS.PPD"',
-    '*Product: "(SP410)"': '*Product: "(XPrinter TDP-245 compatible)"',
-    '*Manufacturer: "iDPRT"': '*Manufacturer: "XPrinter-compatible"',
-    '*ModelName: "SP410"': '*ModelName: "XPrinter TDP-245 compatible"',
-    '*NickName: "iDPRT SP410, 1.4.7"': '*NickName: "XPrinter TDP-245 compatible (TSPL)"',
-    '*DefaultPageSize: w100h150': '*DefaultPageSize: 20x30mmRotated.Fullbleed',
-    '*DefaultPageRegion: w100h150': '*DefaultPageRegion: 20x30mmRotated.Fullbleed',
-    '*DefaultImageableArea: w100h150': '*DefaultImageableArea: 20x30mmRotated.Fullbleed',
-    '*DefaultPaperDimension: w100h150': '*DefaultPaperDimension: 20x30mmRotated.Fullbleed',
-    '*DefaultPaperType: None': '*DefaultPaperType: 1',
-}
-
-INSERT_AFTER = {
-    '*PageSize w50h12/2"x0.5"(50.8mm x 12.7mm): "<</PageSize[142 36]/ImagingBBox null>>setpagedevice"': [
-        '*PageSize 20x30mmRotated.Fullbleed/30 x 20 mm: "<</PageSize[85.04 56.69]/ImagingBBox null>>setpagedevice"',
-        '*PageSize 20x30mm.Fullbleed/20 x 30 mm: "<</PageSize[56.69 85.04]/ImagingBBox null>>setpagedevice"',
-    ],
-    '*PageRegion w50h12/2"x0.5"(50.8mm x 12.7mm): "<</PageSize[142 36]/ImagingBBox null>>setpagedevice"': [
-        '*PageRegion 20x30mmRotated.Fullbleed/30 x 20 mm: "<</PageSize[85.04 56.69]/ImagingBBox null>>setpagedevice"',
-        '*PageRegion 20x30mm.Fullbleed/20 x 30 mm: "<</PageSize[56.69 85.04]/ImagingBBox null>>setpagedevice"',
-    ],
-    '*ImageableArea w50h12/2"x0.5"(50.8mm x 12.7mm): "0 0 142 36"': [
-        '*ImageableArea 20x30mmRotated.Fullbleed/30 x 20 mm: "0 0 85.04 56.69"',
-        '*ImageableArea 20x30mm.Fullbleed/20 x 30 mm: "0 0 56.69 85.04"',
-    ],
-    '*PaperDimension w50h12/2"x0.5"(50.8mm x 12.7mm): "142 36"': [
-        '*PaperDimension 20x30mmRotated.Fullbleed/30 x 20 mm: "85.04 56.69"',
-        '*PaperDimension 20x30mm.Fullbleed/20 x 30 mm: "56.69 85.04"',
-    ],
-}
+def format_mm(value: float) -> str:
+    text = f"{value:.3f}".rstrip("0").rstrip(".")
+    return text or "0"
 
 
-FIXED_REPLACEMENTS = {
-    '*PCFileName: "TDP245TS.PPD"': '*PCFileName: "TDP2430.PPD"',
-    '*Product: "(XPrinter TDP-245 compatible)"': '*Product: "(XPrinter TDP-245 30x20 fixed)"',
-    '*ModelName: "XPrinter TDP-245 compatible"': '*ModelName: "XPrinter TDP-245 30x20 fixed"',
-    '*NickName: "XPrinter TDP-245 compatible (TSPL)"': '*NickName: "XPrinter TDP-245 30x20 fixed (TSPL)"',
-}
-
-FIXED_PAGE_SIZE = '*PageSize 20x30mmRotated.Fullbleed/30 x 20 mm: "<</PageSize[85.04 56.69]/ImagingBBox null>>setpagedevice"'
-FIXED_PAGE_REGION = '*PageRegion 20x30mmRotated.Fullbleed/30 x 20 mm: "<</PageSize[85.04 56.69]/ImagingBBox null>>setpagedevice"'
-FIXED_IMAGEABLE_AREA = '*ImageableArea 20x30mmRotated.Fullbleed/30 x 20 mm: "0 0 85.04 56.69"'
-FIXED_PAPER_DIMENSION = '*PaperDimension 20x30mmRotated.Fullbleed/30 x 20 mm: "85.04 56.69"'
+def mm_to_points(value_mm: float) -> str:
+    value_pt = value_mm * 72.0 / 25.4
+    return f"{value_pt:.2f}"
 
 
-def generate_general(source: Path) -> list[str]:
+def parse_mm(arg: str, name: str) -> float:
+    try:
+        value = float(arg)
+    except ValueError as exc:
+        raise SystemExit(f"{name} must be a number in millimeters, got: {arg}") from exc
+
+    if value <= 0:
+        raise SystemExit(f"{name} must be greater than zero, got: {arg}")
+    return value
+
+
+def build_fixed_ppd(source: Path, width_mm: float, height_mm: float, gap_mm: float) -> list[str]:
+    if gap_mm != 2.0:
+        raise SystemExit(
+            "gap_mm other than 2 is not supported by the current raster-tspl driver path; "
+            "use gap_mm=2"
+        )
+
+    width_text = format_mm(width_mm)
+    height_text = format_mm(height_mm)
+    gap_text = format_mm(gap_mm)
+    page_id = f"w{width_text.replace('.', '_')}h{height_text.replace('.', '_')}mm.Fixed"
+    page_label = f"{width_text} x {height_text} mm"
+    page_size = f"[{mm_to_points(width_mm)} {mm_to_points(height_mm)}]"
+    imageable = f"0 0 {mm_to_points(width_mm)} {mm_to_points(height_mm)}"
+    paper_dimension = f"{mm_to_points(width_mm)} {mm_to_points(height_mm)}"
+
+    replacements = {
+        '*PCFileName: "sp410.tspl.ppd"': '*PCFileName: "TDP24FIX.PPD"',
+        '*Product: "(SP410)"': f'*Product: "(XPrinter fixed {width_text}x{height_text} gap {gap_text})"',
+        '*Manufacturer: "iDPRT"': '*Manufacturer: "XPrinter-compatible"',
+        '*ModelName: "SP410"': f'*ModelName: "XPrinter fixed {width_text}x{height_text} gap {gap_text}"',
+        '*NickName: "iDPRT SP410, 1.4.7"': (
+            f'*NickName: "XPrinter fixed {width_text} x {height_text} mm gap {gap_text} (TSPL)"'
+        ),
+    }
+
+    fixed_page_size = (
+        f'*PageSize {page_id}/{page_label}: "<</PageSize{page_size}/ImagingBBox null>>setpagedevice"'
+    )
+    fixed_page_region = (
+        f'*PageRegion {page_id}/{page_label}: "<</PageSize{page_size}/ImagingBBox null>>setpagedevice"'
+    )
+    fixed_imageable_area = f'*ImageableArea {page_id}/{page_label}: "{imageable}"'
+    fixed_paper_dimension = f'*PaperDimension {page_id}/{page_label}: "{paper_dimension}"'
+
     lines = source.read_text().splitlines()
-    out: list[str] = []
-    seen_replacements = set()
-    seen_anchors = set()
-
-    for original_line in lines:
-        line = REPLACEMENTS.get(original_line, original_line)
-        if original_line in REPLACEMENTS:
-            seen_replacements.add(original_line)
-
-        out.append(line)
-
-        extras = INSERT_AFTER.get(original_line)
-        if extras:
-            seen_anchors.add(original_line)
-            out.extend(extras)
-
-    missing_replacements = sorted(set(REPLACEMENTS) - seen_replacements)
-    missing_anchors = sorted(set(INSERT_AFTER) - seen_anchors)
-    if missing_replacements or missing_anchors:
-        missing = "\n".join(missing_replacements + missing_anchors)
-        raise SystemExit(f"PPD patch anchors not found:\n{missing}")
-
-    return out
-
-
-def generate_fixed(lines: list[str]) -> list[str]:
     out: list[str] = []
     inside_pagesize = False
     inside_pageregion = False
+    inside_resolution = False
     inside_papertype = False
 
     for original_line in lines:
-        line = FIXED_REPLACEMENTS.get(original_line, original_line)
+        line = replacements.get(original_line, original_line)
 
         if line.startswith("*CustomPageSize") or line.startswith("*ParamCustomPageSize"):
             continue
@@ -95,16 +79,15 @@ def generate_fixed(lines: list[str]) -> list[str]:
             continue
         if inside_pagesize:
             if line.startswith("*DefaultPageSize:"):
-                out.append("*DefaultPageSize: 20x30mmRotated.Fullbleed")
+                out.append(f"*DefaultPageSize: {page_id}")
                 continue
-            if (
-                line.startswith("*OrderDependency: 10 AnySetup *PageSize")
-                or line == FIXED_PAGE_SIZE
-                or line == "*CloseUI: *PageSize"
-            ):
+            if line.startswith("*OrderDependency: 10 AnySetup *PageSize"):
                 out.append(line)
-                if line == "*CloseUI: *PageSize":
-                    inside_pagesize = False
+                out.append(fixed_page_size)
+                continue
+            if line == "*CloseUI: *PageSize":
+                out.append(line)
+                inside_pagesize = False
                 continue
             continue
 
@@ -114,33 +97,51 @@ def generate_fixed(lines: list[str]) -> list[str]:
             continue
         if inside_pageregion:
             if line.startswith("*DefaultPageRegion:"):
-                out.append("*DefaultPageRegion: 20x30mmRotated.Fullbleed")
+                out.append(f"*DefaultPageRegion: {page_id}")
                 continue
-            if (
-                line.startswith("*OrderDependency: 10 AnySetup *PageRegion")
-                or line == FIXED_PAGE_REGION
-                or line == "*CloseUI: *PageRegion"
-            ):
+            if line.startswith("*OrderDependency: 10 AnySetup *PageRegion"):
                 out.append(line)
-                if line == "*CloseUI: *PageRegion":
-                    inside_pageregion = False
+                out.append(fixed_page_region)
+                continue
+            if line == "*CloseUI: *PageRegion":
+                out.append(line)
+                inside_pageregion = False
                 continue
             continue
 
         if line.startswith("*DefaultImageableArea:"):
-            out.append("*DefaultImageableArea: 20x30mmRotated.Fullbleed")
+            out.append(f"*DefaultImageableArea: {page_id}")
             continue
         if line.startswith("*ImageableArea "):
-            if line == FIXED_IMAGEABLE_AREA:
-                out.append(line)
+            if not out or out[-1] != fixed_imageable_area:
+                out.append(fixed_imageable_area)
             continue
 
         if line.startswith("*DefaultPaperDimension:"):
-            out.append("*DefaultPaperDimension: 20x30mmRotated.Fullbleed")
+            out.append(f"*DefaultPaperDimension: {page_id}")
             continue
         if line.startswith("*PaperDimension "):
-            if line == FIXED_PAPER_DIMENSION:
+            if not out or out[-1] != fixed_paper_dimension:
+                out.append(fixed_paper_dimension)
+            continue
+
+        if line == "*OpenUI *Resolution/Resolution: PickOne":
+            inside_resolution = True
+            out.append(line)
+            continue
+        if inside_resolution:
+            if line.startswith("*DefaultResolution:"):
+                out.append("*DefaultResolution: 203dpi")
+                continue
+            if (
+                line.startswith("*OrderDependency: 100 AnySetup *Resolution")
+                or line == '*Resolution 203dpi/203 DPI: "<</HWResolution[203 203]/cupsBitsPerColor 1/cupsRowCount 0/cupsRowFeed 0/cupsRowStep 0/cupsColorSpace 3>>setpagedevice"'
+                or line == "*CloseUI: *Resolution"
+            ):
                 out.append(line)
+                if line == "*CloseUI: *Resolution":
+                    inside_resolution = False
+                continue
             continue
 
         if line == "*OpenUI *PaperType/Type: PickOne":
@@ -168,25 +169,20 @@ def generate_fixed(lines: list[str]) -> list[str]:
 
 
 def main() -> int:
-    fixed = False
-    args = sys.argv[1:]
-    if args and args[0] == "--fixed-30x20-gap2":
-        fixed = True
-        args = args[1:]
-
-    if len(args) != 2:
+    if len(sys.argv) != 6:
         print(
-            f"usage: {Path(sys.argv[0]).name} [--fixed-30x20-gap2] SOURCE_PPD DEST_PPD",
+            f"usage: {Path(sys.argv[0]).name} SOURCE_PPD DEST_PPD WIDTH_MM HEIGHT_MM GAP_MM",
             file=sys.stderr,
         )
         return 2
 
-    source = Path(args[0])
-    dest = Path(args[1])
+    source = Path(sys.argv[1])
+    dest = Path(sys.argv[2])
+    width_mm = parse_mm(sys.argv[3], "width_mm")
+    height_mm = parse_mm(sys.argv[4], "height_mm")
+    gap_mm = parse_mm(sys.argv[5], "gap_mm")
 
-    out = generate_general(source)
-    if fixed:
-        out = generate_fixed(out)
+    out = build_fixed_ppd(source, width_mm, height_mm, gap_mm)
     dest.write_text("\n".join(out) + "\n")
     return 0
 
