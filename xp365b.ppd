@@ -32,7 +32,7 @@
 *% ============ Label Sizes (PageSize) ============
 *OpenUI *PageSize/Label Size: PickOne
 *OrderDependency: 30 AnySetup *PageSize
-*DefaultPageSize: w164h113
+*DefaultPageSize: w85h57
 
 *PageSize w57h28/20 x 10 mm: "<</PageSize[57 28]/ImagingBBox null>>setpagedevice"
 *PageSize w85h57/30 x 20 mm: "<</PageSize[85 57]/ImagingBBox null>>setpagedevice"
@@ -53,7 +53,7 @@
 *% ============ PageRegion (mirrors PageSize) ============
 *OpenUI *PageRegion: PickOne
 *OrderDependency: 40 AnySetup *PageRegion
-*DefaultPageRegion: w164h113
+*DefaultPageRegion: w85h57
 
 *PageRegion w57h28/20 x 10 mm: "<</PageSize[57 28]/ImagingBBox null>>setpagedevice"
 *PageRegion w85h57/30 x 20 mm: "<</PageSize[85 57]/ImagingBBox null>>setpagedevice"
@@ -72,7 +72,7 @@
 *CloseUI: *PageRegion
 
 *% ============ ImageableArea (full bleed — no margins) ============
-*DefaultImageableArea: w164h113
+*DefaultImageableArea: w85h57
 
 *ImageableArea w57h28/20 x 10 mm: "0 0 57 28"
 *ImageableArea w85h57/30 x 20 mm: "0 0 85 57"
@@ -89,7 +89,7 @@
 *ImageableArea w340h213/120 x 75 mm: "0 0 340 213"
 
 *% ============ PaperDimension ============
-*DefaultPaperDimension: w164h113
+*DefaultPaperDimension: w85h57
 
 *PaperDimension w57h28/20 x 10 mm: "57 28"
 *PaperDimension w85h57/30 x 20 mm: "85 57"
