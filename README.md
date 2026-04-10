@@ -96,7 +96,7 @@ To enable printer discovery on the network, add files:
     <txt-record>txtvers=1</txt-record>
     <txt-record>qtotal=1</txt-record>
     <txt-record>rp=printers/XPrinter-30x20</txt-record>
-    <txt-record>ty=XPrinter fixed label queue</txt-record>
+    <txt-record>ty=XPrinter 30x20mm</txt-record>
     <txt-record>product=(TSPL printer via CUPS)</txt-record>
     <txt-record>adminurl=http://%h:631/printers/XPrinter-30x20</txt-record>
     <txt-record>URF=none</txt-record>
