@@ -19,8 +19,8 @@ RUN git clone https://github.com/caxapyk/capt_lbp810-1120.git && \
     make CFLAGS="-O2 -g -DDEBUG" && \
     make install
 
-# Install TSPL filters from the official Linux package and generate an
-# XPrinter-friendly TDP-245 PPD from the filter-compatible SP410 profile.
+# Install TSPL filters from the official Linux package and generate a
+# single-purpose fixed label PPD from the filter-compatible SP410 profile.
 RUN set -eux; \
     tmpdir="$(mktemp -d)"; \
     cd "$tmpdir"; \
@@ -37,5 +37,8 @@ RUN set -eux; \
     install -m 644 idprt_tspl_printer_linux_driver_v1.4.7/ppd/*.ppd /usr/share/cups/model/tspl/; \
     python3 /usr/local/bin/generate_tdp245_ppd.py \
         idprt_tspl_printer_linux_driver_v1.4.7/ppd/sp410.tspl.ppd \
-        /usr/share/cups/model/tspl/TDP-245-Plus-tspl.ppd; \
+        /usr/share/cups/model/tspl/TDP-245-fixed-tspl.ppd \
+        30 \
+        20 \
+        2; \
     rm -rf "$tmpdir"
