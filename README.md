@@ -88,7 +88,7 @@ To enable printer discovery on the network, add files:
 <?xml version="1.0" standalone='no'?>
 <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
 <service-group>
-  <name replace-wildcards="yes">XPrinter on %h</name>
+  <name replace-wildcards="yes">XPrinter 30x20mm</name>
   <service>
     <type>_ipp._tcp</type>
     <subtype>_universal._sub._ipp._tcp</subtype>
