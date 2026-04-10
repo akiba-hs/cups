@@ -9,6 +9,10 @@ def format_mm(value: float) -> str:
     return text or "0"
 
 
+def mm_id(value: float) -> str:
+    return format_mm(value).replace(".", "_")
+
+
 def mm_to_points(value_mm: float) -> str:
     value_pt = value_mm * 72.0 / 25.4
     return f"{value_pt:.2f}"
@@ -35,7 +39,7 @@ def build_fixed_ppd(source: Path, width_mm: float, height_mm: float, gap_mm: flo
     width_text = format_mm(width_mm)
     height_text = format_mm(height_mm)
     gap_text = format_mm(gap_mm)
-    page_id = f"w{width_text.replace('.', '_')}h{height_text.replace('.', '_')}mm.Fixed"
+    page_id = f"{mm_id(width_mm)}x{mm_id(height_mm)}mm"
     page_label = f"{width_text} x {height_text} mm"
     page_size = f"[{mm_to_points(width_mm)} {mm_to_points(height_mm)}]"
     imageable = f"0 0 {mm_to_points(width_mm)} {mm_to_points(height_mm)}"
