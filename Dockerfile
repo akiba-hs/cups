@@ -38,4 +38,7 @@ RUN set -eux; \
     python3 /usr/local/bin/generate_tdp245_ppd.py \
         idprt_tspl_printer_linux_driver_v1.4.7/ppd/sp410.tspl.ppd \
         /usr/share/cups/model/tspl/TDP-245-Plus-tspl.ppd; \
+    python3 /usr/local/bin/generate_tdp245_ppd.py --fixed-30x20-gap2 \
+        idprt_tspl_printer_linux_driver_v1.4.7/ppd/sp410.tspl.ppd \
+        /usr/share/cups/model/tspl/TDP-245-30x20-gap2-tspl.ppd; \
     rm -rf "$tmpdir"
