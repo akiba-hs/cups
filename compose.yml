@@ -2,6 +2,8 @@ services:
   cups:
     image: ghcr.io/akiba-hs/cups
     build: .
+    # The iDPRT TSPL package ships x64/x86 filters only.
+    platform: linux/amd64
     restart: always
     privileged: true
     ports:

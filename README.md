@@ -3,15 +3,18 @@ Provides a Docker image for CUPS with:
 
 - Canon LBP-810 CAPT driver (`capt_lbp810-1120`)
 - official Linux TSPL filters from iDPRT (`raster-tspl`, `raster-esc`)
-- `TDP-245-fixed-tspl.ppd`, a single-purpose queue profile generated from the filter-compatible iDPRT `sp410.tspl.ppd` with hard-wired media, `PaperType=1`, `203dpi`, and no `CustomPageSize`
+- fixed TSPL queue profiles generated from the filter-compatible iDPRT `sp410.tspl.ppd` with hard-wired media, `PaperType=1`, `203dpi`, and no `CustomPageSize`:
+  - `TDP-245-fixed-tspl.ppd` for `30 x 20 mm`
+  - `TDP-245-fixed-58x40-tspl.ppd` for `58 x 40 mm`
 
 ## Installation
 1. Copy `compose.yml` to the server with the attached printer.
-2. Build the image. It hard-codes the fixed `30 x 20 mm`, `gap 2 mm` label profile in `Dockerfile`:
+2. Build the image. It generates fixed `30 x 20 mm` and `58 x 40 mm`, `gap 2 mm` label profiles in `Dockerfile`:
    ```bash
    docker compose build
    docker compose up -d
    ```
+   `compose.yml` pins `linux/amd64` because the official iDPRT TSPL package ships x64/x86 filters only.
 3. Discover the stable USB URI:
    ```bash
    docker compose exec cups lpinfo -v
@@ -20,9 +23,10 @@ Provides a Docker image for CUPS with:
    ```bash
    docker compose exec cups lpadmin -p Canon-LBP-810 -E -v 'usb://...' -P /usr/share/cups/model/Canon-LBP-810-capt.ppd
    ```
-5. Add the fixed TSPL/XPrinter queue:
+5. Add the fixed TSPL/XPrinter queue you need:
    ```bash
    docker compose exec cups lpadmin -p XPrinter-30x20 -E -v 'usb://...' -P /usr/share/cups/model/tspl/TDP-245-fixed-tspl.ppd
+   docker compose exec cups lpadmin -p XPrinter-58x40 -E -v 'usb://...' -P /usr/share/cups/model/tspl/TDP-245-fixed-58x40-tspl.ppd
    ```
 6. Add the network printer to the client OS by IPP/LPD using host `<host>:631`.
 
@@ -99,6 +103,30 @@ To enable printer discovery on the network, add files:
     <txt-record>ty=XPrinter 30x20mm</txt-record>
     <txt-record>product=(TSPL printer via CUPS)</txt-record>
     <txt-record>adminurl=http://%h:631/printers/XPrinter-30x20</txt-record>
+    <txt-record>URF=none</txt-record>
+    <txt-record>pdl=application/pdf,application/postscript,image/urf</txt-record>
+    <txt-record>Color=F</txt-record>
+    <txt-record>Duplex=F</txt-record>
+  </service>
+</service-group>
+```
+
+`/etc/avahi/services/cups-xprinter-58x40.service`:
+```xml
+<?xml version="1.0" standalone='no'?>
+<!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+<service-group>
+  <name replace-wildcards="yes">XPrinter 58x40mm</name>
+  <service>
+    <type>_ipp._tcp</type>
+    <subtype>_universal._sub._ipp._tcp</subtype>
+    <port>631</port>
+    <txt-record>txtvers=1</txt-record>
+    <txt-record>qtotal=1</txt-record>
+    <txt-record>rp=printers/XPrinter-58x40</txt-record>
+    <txt-record>ty=XPrinter 58x40mm</txt-record>
+    <txt-record>product=(TSPL printer via CUPS)</txt-record>
+    <txt-record>adminurl=http://%h:631/printers/XPrinter-58x40</txt-record>
     <txt-record>URF=none</txt-record>
     <txt-record>pdl=application/pdf,application/postscript,image/urf</txt-record>
     <txt-record>Color=F</txt-record>
