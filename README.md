@@ -52,6 +52,32 @@ This fixed-profile approach is the safer option for browser/GUI printing because
 
 With the current compose setup, CUPS sees the real USB bus and can return stable `usb://...` URIs that usually include device identity data such as vendor, model, and serial. Prefer that URI over `/dev/usb/lp*`, because it survives cable replugging and port changes much better.
 
+## Canon PIXMA G2415 (MegaTank, USB)
+
+The printer identifies itself over USB as `G2010 series` (`04a9:183a`). Gutenprint has no
+`G2010`/`G2415` entry, but the G3010 driver (same print engine, G3010 = G2010 + Wi-Fi) works
+over USB. The printer does not support IPP-over-USB, so `-m everywhere` fails.
+
+1. Discover the stable USB URI:
+   ```bash
+   docker compose exec cups lpinfo -v | grep -i canon
+   ```
+2. Add the black-and-white queue using the bundled PPD:
+   ```bash
+   docker compose exec cups lpadmin -p Canon-G2415 -E      -v 'usb://Canon/G2010%20series?serial=046F8E&interface=1'      -P /etc/cups/ppd/Canon-G2415-bw.ppd
+   ```
+   `ppd/Canon-G2415-bw.ppd` is a Gutenprint G3010 PPD restricted to
+   `Gray` (default) and `Black` `ColorModel` choices, so the queue cannot print in color.
+
+Notes:
+- The kernel `usblp` driver can grab the printer interface and break the CUPS USB backend.
+  Detach it (needed once per printer reconnect):
+  ```bash
+  echo '<bus>-<port>:1.1' | sudo tee /sys/bus/usb/drivers/usblp/unbind
+  ```
+  Find the exact sysfs name with `ls /sys/bus/usb/drivers/usblp/`.
+- After editing a PPD, restart the container (`docker compose restart cups`) so cupsd reloads it.
+
 ## Avahi Setup
 Install avahi:
 ```bash
@@ -138,4 +164,28 @@ To enable printer discovery on the network, add files:
 Restart Avahi:
 ```bash
 systemctl restart avahi-daemon
+```
+
+`/etc/avahi/services/cups-g2415.service`:
+```xml
+<?xml version="1.0" standalone='no'?>
+<!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+<service-group>
+  <name replace-wildcards="yes">Canon G2415 on %h</name>
+  <service>
+    <type>_ipp._tcp</type>
+    <subtype>_universal._sub._ipp._tcp</subtype>
+    <port>631</port>
+    <txt-record>txtvers=1</txt-record>
+    <txt-record>qtotal=1</txt-record>
+    <txt-record>rp=printers/Canon-G2415</txt-record>
+    <txt-record>ty=Canon PIXMA G2415</txt-record>
+    <txt-record>product=(Canon G2415 via CUPS)</txt-record>
+    <txt-record>adminurl=http://%h:631/printers/Canon-G2415</txt-record>
+    <txt-record>URF=none</txt-record>
+    <txt-record>pdl=application/pdf,application/postscript,image/urf</txt-record>
+    <txt-record>Color=F</txt-record>
+    <txt-record>Duplex=F</txt-record>
+  </service>
+</service-group>
 ```
