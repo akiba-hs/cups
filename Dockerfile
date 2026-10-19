@@ -7,10 +7,15 @@ RUN apt-get update && \
         curl \
         git \
         python3 \
+        sane-utils \
         unzip \
     && rm -rf /var/lib/apt/lists/*
 
 COPY generate_tdp245_ppd.py /usr/local/bin/generate_tdp245_ppd.py
+COPY entrypoint.sh /usr/local/bin/akiba-cups-entrypoint.sh
+RUN chmod 755 /usr/local/bin/akiba-cups-entrypoint.sh
+COPY sane/saned.conf /etc/sane.d/saned.conf
+
 
 
 # Сборка и установка драйвера LBP810/1120
@@ -49,3 +54,5 @@ RUN set -eux; \
         40 \
         2; \
     rm -rf "$tmpdir"
+
+ENTRYPOINT ["/usr/local/bin/akiba-cups-entrypoint.sh"]

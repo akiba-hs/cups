@@ -68,6 +68,9 @@ over USB. The printer does not support IPP-over-USB, so `-m everywhere` fails.
    ```
    `ppd/Canon-G2415-bw.ppd` is a Gutenprint G3010 PPD restricted to
    `Gray` (default) and `Black` `ColorModel` choices, so the queue cannot print in color.
+   It also accepts the client option `A4.Borderless` as a compatibility alias
+   and maps it to normal A4 with the printer's real margins; it does not make
+   the G2415 a true borderless printer.
 
 Notes:
 - The kernel `usblp` driver can grab the printer interface and break the CUPS USB backend.
@@ -77,6 +80,33 @@ Notes:
   ```
   Find the exact sysfs name with `ls /sys/bus/usb/drivers/usblp/`.
 - After editing a PPD, restart the container (`docker compose restart cups`) so cupsd reloads it.
+
+## Scanner (SANE)
+
+CUPS handles printing only. The Canon G2415/G2010 USB device is detected by
+SANE's `pixma` backend, so this image also runs `saned` on TCP port `6566`.
+The compose file publishes that port and allows the local `192.168.8.0/24`
+network in `sane/saned.conf`.
+
+After rebuilding and redeploying the image, configure a client with:
+
+```bash
+sudo apt install sane-utils
+printf 'net:192.168.8.43\n' | sudo tee /etc/sane.d/net.conf
+scanimage -L
+scanimage --format=png --resolution 300 > scan.png
+```
+
+For clients that use an explicit SANE server URI, use `net:192.168.8.43`.
+The Canon must be connected to the server and visible in `/dev/bus/usb`; a
+different USB printer or a disconnected Canon cannot be scanned. Do not run
+`scanimage -L` inside the CUPS container without a D-Bus system bus: some
+Debian builds abort there while `sane-find-scanner` and the network client
+work normally.
+
+The `saned` service shares the container's USB bus with CUPS. Keep one active
+print or scan operation at a time, and detach `usblp` from the Canon interface
+if the device is visible to USB but unavailable to either backend.
 
 ## Avahi Setup
 Install avahi:
